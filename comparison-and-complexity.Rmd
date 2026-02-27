@@ -1,7 +1,7 @@
 ---
-title: "CTA-ED Exercise 3: Comparison and complexity"
-author: "[name here]"
-date: "2/28/2024"
+title: "Computational Text Analysis - Exercise 3: Comparison and complexity"
+author: "[your name here]"
+date: "25/02/2026"
 output: html_document
 ---
 
@@ -9,7 +9,7 @@ output: html_document
 
 The hands-on exercise for this week focuses on: 1) comparing texts; 2) measuring he document-level characteristics of text---here, complexity.
 
-In this tutorial, you will learn how to:
+In this exercise, you will learn how to:
   
 * Compare texts using character-based measures of similarity and distance
 * Compare texts using term-based measures of similarity and distance
@@ -18,7 +18,7 @@ In this tutorial, you will learn how to:
 
 ## Setup 
 
-Before proceeding, we'll load the remaining packages we will need for this tutorial.
+Before proceeding, we'll load the remaining packages we will need for this exercise.
 
 ```{r, echo=F}
 library(kableExtra)
@@ -74,9 +74,8 @@ tweets_corpus
 We are now ready to reformat the data into a document feature matrix.
 
 ```{r}
-dfmat <- dfm(tokens(tweets_corpus),
-             remove_punct = TRUE, 
-             remove = stopwords("english"))
+dfmat <- dfm(tokens(tweets_corpus, remove_punct = TRUE)) %>%
+  dfm_remove(pattern = stopwords("english"))
 
 dfmat
 ```
