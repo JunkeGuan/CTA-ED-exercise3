@@ -262,6 +262,18 @@ as.matrix(euclid_dist)[1:5, 1:5]
 ```
 #This computes pairwise Euclidean distances between the aggregated tweets of each MP. Smaller values indicate more similar word usage patterns, while larger values suggest greater linguistic divergence.
 
+```{r}
+rownames(as.matrix(euclid_dist))
+```
+```{r}
+may_euclid <- as.data.frame(as.matrix(euclid_dist)[23, c(1:22, 24)])
+
+colnames(may_euclid) <- "euclid_dist"
+
+may_euclid <- tibble::rownames_to_column(may_euclid, "username")
+
+may_euclid
+```
 
 2. Estimate at least three other complexity measures for the EU speeches as above. Consider how the results compare to the Flesch-Kincaid measure used in the article by @schoonvelde_liberals_2019.
 3. (Advanced---optional) Estimate similarity scores between the MP tweets and the PM tweets for each week contained in the data. Plot the results. 
