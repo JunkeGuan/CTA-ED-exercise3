@@ -274,6 +274,105 @@ may_euclid <- tibble::rownames_to_column(may_euclid, "username")
 
 may_euclid
 ```
+#Note#
+To address Exercise 1, I first grouped the document-feature matrix by username so that all tweets from each MP were aggregated into a single document. I then computed Euclidean distances between these aggregated documents using `textstat_dist()`.  
+Next, I extracted the row corresponding to Theresa May to examine how linguistically similar each MP’s tweets are to those of the Prime Minister. Smaller Euclidean distance values indicate more similar word usage patterns, while larger values suggest greater divergence in language use.
 
 2. Estimate at least three other complexity measures for the EU speeches as above. Consider how the results compare to the Flesch-Kincaid measure used in the article by @schoonvelde_liberals_2019.
+```{r}
+textstat_readability(speeches$text)
+```
+#Flesch = Flesch Reading Ease；higher = easier to read
+```{r}
+readability_all <- textstat_readability(
+  speeches$text,
+  measure = c("Flesch", "SMOG", "FOG")
+)
+
+head(readability_all)
+```
+```{r}
+speeches$Flesch <- readability_all$Flesch
+speeches$SMOG   <- readability_all$SMOG
+speeches$FOG    <- readability_all$FOG
+
+head(speeches)
+```
+```{r}
+complexity_summary <- speeches %>%
+  group_by(speaker) %>%
+  summarise(
+    mean_Flesch = mean(Flesch, na.rm = TRUE),
+    mean_SMOG   = mean(SMOG, na.rm = TRUE),
+    mean_FOG    = mean(FOG, na.rm = TRUE),
+    N = n()
+  )
+
+complexity_summary
+```
+#Note#
+To extend the analysis beyond the Flesch–Kincaid score, I estimated three additional readability measures: Flesch, SMOG, and FOG. These indicators capture different aspects of textual complexity, where higher Flesch scores indicate easier readability, while higher SMOG and FOG scores suggest greater linguistic complexity.
+The results show a consistent pattern across the four speakers. David Cameron has the highest Flesch score and the lowest SMOG and FOG values, indicating that his speeches are generally easier to read and less complex. In contrast, J.L.R. Zapatero shows the lowest Flesch score and the highest SMOG and FOG values, suggesting a more complex and demanding rhetorical style. Gordon Brown and Mariano Rajoy fall in between these two extremes, displaying moderate levels of complexity across all three measures.
+Overall, the comparison across readability metrics produces a substantively similar ranking of speakers. This suggests that the findings are robust to the choice of complexity measure and supports the interpretation that Cameron’s speeches are linguistically simpler, while Zapatero’s are comparatively more complex.
+
 3. (Advanced---optional) Estimate similarity scores between the MP tweets and the PM tweets for each week contained in the data. Plot the results. 
+```{r}
+tweets$week <- format(as.Date(tweets$date), "%Y-%U")
+head(tweets)
+```
+
+```{r}
+head(tweets[, c("date", "week")])
+```
+```{r}
+tweets_weekly <- tweets %>%
+  group_by(username, week) %>%
+  summarise(text = paste(tweet, collapse = " "), .groups = "drop")
+
+head(tweets_weekly)
+#For each week, all the tweets of each MP are combined and then the similarity with Theresa May is calculated.
+```
+```{r}
+tweets_weekly_corpus <- corpus(
+  tweets_weekly,
+  text_field = "text"
+)
+
+docvars(tweets_weekly_corpus, "username") <- tweets_weekly$username
+docvars(tweets_weekly_corpus, "week") <- tweets_weekly$week
+
+tweets_weekly_corpus
+```
+#686 documents = MP × week；2 docvars = username & week；each document = all tweets of one certain MP in one week
+
+```{r}
+toks_weekly <- tokens(
+  tweets_weekly_corpus,
+  remove_punct = TRUE
+) %>%
+  tokens_remove(stopwords("english"))
+```
+```{r}
+toks_weekly
+```
+
+```{r}
+dfmat_weekly <- dfm(toks_weekly)
+dfmat_weekly
+```
+```{r}
+docnames(dfmat_weekly) <- paste(tweets_weekly$username,
+                                tweets_weekly$week,
+                                sep = "_")
+head(docnames(dfmat_weekly))
+```
+```{r}
+cos_weekly <- textstat_simil(
+  dfmat_weekly,
+  margin = "documents",
+  method = "cosine"
+)
+
+cos_weekly[1:5, 1:5]
+```
+
