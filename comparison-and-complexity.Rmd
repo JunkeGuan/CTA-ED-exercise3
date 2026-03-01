@@ -1,6 +1,6 @@
 ---
 title: "Computational Text Analysis - Exercise 3: Comparison and complexity"
-author: "[your name here]"
+author: Junke Guan
 date: "25/02/2026"
 output: html_document
 ---
@@ -166,59 +166,6 @@ ggplot(cosmatdf) +
 
 ```
 
-Combining these steps into a single `for` loop, we can see how our different similarity measures of interest compare. 
-
-```{r}
-
-#specify different similarity measures to explore
-methods <- c("correlation", "cosine", "dice", "edice")
-
-#create empty dataframe
-testdf_all <- data.frame()
-
-#gen for loop across methods types
-for (i in seq_along(methods)) {
-  
-  #pass method to character string object
-  sim_method <- methods[[i]]
-  
-  #estimate similarity, grouping by username
-  test <- dfmat %>%
-    dfm_group(groups = username) %>%
-    textstat_simil(margin = "documents", method = sim_method) #specify method here as character object created above
-  
-  testm <- as.matrix(test) #convert to a matrix
-  
-  #generate data frame keeping only the row for Theresa May
-  testdf <- as.data.frame(testm[23, c(1:22, 24)])
-  
-  #rename column
-  colnames(testdf) <- "corr_may"
-  
-  #create column variable from rownames
-  testdf <- tibble::rownames_to_column(testdf, "username")
-  
-  #record method in new column variable
-  testdf$method <- sim_method
-
-  #bind all together
-  testdf_all <- rbind(testdf_all, testdf)  
-  
-}
-
-#create variable (for viz only) that is mean of similarity scores for each MP
-testdf_all <- testdf_all %>%
-  group_by(username) %>%
-  mutate(mean_sim = mean(corr_may))
-
-ggplot(testdf_all) +
-  geom_point( aes(x=reorder(username, -mean_sim), y= corr_may, color = method)) + 
-  coord_flip() +
-  xlab("MP username") +
-  ylab("Similarity score") + 
-  theme_minimal()
-
-```
 
 ## Complexity
 
@@ -295,5 +242,26 @@ ggplot(sum_corpus, aes(x=speaker, y=mean)) +
 ## Exercises
 
 1. Compute distance measures such as "euclidean" or "manhattan" for the MP tweets as above, comparing between tweets by MPs and tweets by PM, Theresa May. 
+```{r}
+head(dfmat)
+```
+```{r}
+dfmat_grouped <- dfmat %>%
+  dfm_group(groups = username)
+```
+```{r}
+dim(dfmat_grouped)
+```
+#24 = 24 Cabinet MPs; 26879 = features
+
+```{r}
+euclid_dist <- textstat_dist(dfmat_grouped, 
+                             margin = "documents", 
+                             method = "euclidean")
+as.matrix(euclid_dist)[1:5, 1:5]
+```
+#This computes pairwise Euclidean distances between the aggregated tweets of each MP. Smaller values indicate more similar word usage patterns, while larger values suggest greater linguistic divergence.
+
+
 2. Estimate at least three other complexity measures for the EU speeches as above. Consider how the results compare to the Flesch-Kincaid measure used in the article by @schoonvelde_liberals_2019.
 3. (Advanced---optional) Estimate similarity scores between the MP tweets and the PM tweets for each week contained in the data. Plot the results. 
