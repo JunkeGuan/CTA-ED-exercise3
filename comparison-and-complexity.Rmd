@@ -1,7 +1,7 @@
 ---
 title: "Computational Text Analysis - Exercise 3: Comparison and complexity"
 author: Junke Guan
-date: "25/02/2026"
+date: "01/03/2026"
 output: html_document
 ---
 
@@ -375,4 +375,60 @@ cos_weekly <- textstat_simil(
 
 cos_weekly[1:5, 1:5]
 ```
+```{r}
+cos_df <- as.data.frame(as.matrix(cos_weekly))
+cos_df$doc1 <- rownames(cos_df)
 
+head(cos_df)
+```
+```{r}
+library(tidyr)
+
+cos_long <- cos_df %>%
+  pivot_longer(
+    cols = -doc1,
+    names_to = "doc2",
+    values_to = "similarity"
+  )
+
+head(cos_long)
+#I converted the cosine similarity matrix into a long-format dataframe so that each row represents the similarity between two MP-week documents. This structure is easier for visualisation
+```
+```{r}
+library(dplyr)
+library(tidyr)
+
+cos_long2 <- cos_long %>%
+  separate(doc1, into = c("user1", "week"), sep = "_") %>%
+  separate(doc2, into = c("user2", "week2"), sep = "_")
+
+head(cos_long2)
+#I separated the document identifiers into username and week components in order to match MP tweets with PM tweets within the same week
+```
+```{r}
+cos_sameweek <- cos_long2 %>%
+  filter(week == week2)
+
+head(cos_sameweek)
+```
+```{r}
+unique(cos_sameweek$user1)
+```
+```{r}
+library(ggplot2)
+
+ggplot(cos_sameweek, aes(x = week, y = similarity)) +
+  geom_boxplot() +
+  labs(
+    title = "Similarity of MP tweets within the same week",
+    x = "Week",
+    y = "Cosine similarity"
+  ) +
+  theme_minimal()
+```
+#Note#
+The boxplot shows the distribution of cosine similarity scores between MPs’ tweets within the same week. Overall, similarity scores are relatively low, with most values concentrated below 0.2. This suggests that MPs tend to discuss diverse topics even within the same week, indicating a high degree of individualised communication strategies. 
+
+However, occasional higher similarity values (around 0.3–0.6) suggest that MPs sometimes respond to shared political events or common policy agendas. The consistent presence of values at 1 reflects comparisons of each document with itself, which is expected in similarity matrices. 
+
+Overall, the results indicate that while there is some convergence in political messaging, MPs’ weekly tweets are generally heterogeneous in content.
